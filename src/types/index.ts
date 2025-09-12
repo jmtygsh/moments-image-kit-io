@@ -38,3 +38,35 @@ export type PaginatedSearchParams = {
   filter?: string;
   sort?: string;
 };
+
+export type ActionResponse<T> =
+  | {success: true; data: T}
+  | {
+      success: false;
+      error:
+        | string
+        | {
+            message: string;
+            details?:
+              | Record<string, string | string[]>
+              | {
+                  success: false;
+                  errors: Record<string, string[]> | undefined;
+                };
+          };
+      status?: number;
+    };
+
+export type ErrorResponse = Omit<ActionResponse<never>, "error"> & {
+  success: false;
+  error: {
+    message: string;
+    details?:
+      | Record<string, string | string[]>
+      | {
+          success: false;
+          errors: Record<string, string[]> | undefined;
+        };
+  };
+  status?: number;
+};

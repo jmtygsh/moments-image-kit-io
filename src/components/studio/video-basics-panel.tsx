@@ -1,4 +1,4 @@
-import {Crop, Focus, Grid3X3} from "lucide-react";
+import {Crop, Focus} from "lucide-react";
 
 import {
   Accordion,
@@ -16,12 +16,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {Slider} from "@/components/ui/slider";
-import {
-  BasicsTransform,
-  CropMode,
-  FocusMode,
-} from "@/types/image-transformations";
+import {CropMode, FocusMode} from "@/types/image-transformations";
+
+type BasicsTransform = {
+  width?: number | string; // w
+  height?: number | string; // h
+  aspectRatio?: string; // ar e.g. "16-9" or expr
+  cropMode?: CropMode; // c / cm
+  focus?: FocusMode; // fo
+  background?: {
+    type: "solid" | "blurred";
+    color?: string; // hex, rgba, or color name
+    blurIntensity?: number | "auto"; // blurred
+    brightness?: number; // -255..255
+  };
+  border?: {
+    width: number | string; // px or expr
+    color: string; // hex or name
+  };
+  radius?: number | "max"; // r
+  rotate?: 0 | 90 | 180 | 270 | 360; // rt
+};
 
 type BasicsControlsProps = {
   transforms: BasicsTransform;
@@ -40,11 +55,11 @@ const aspectRatios = [
 
 const cropModes = [
   {label: "Maintain Ratio", value: "maintain_ratio"},
-  {label: "Pad & Resize", value: "pad_resize"},
-  {label: "Force", value: "force"},
-  {label: "At Max", value: "at_max"},
-  {label: "At Least", value: "at_least"},
-  {label: "Extract", value: "extract"},
+  {label: "Pad & Resize", value: "cm-pad_resize"},
+  {label: "Force", value: "c-force"},
+  {label: "At Max", value: "c-at_max"},
+  {label: "At Least", value: "c-at_least"},
+  {label: "Extract", value: "cm-extract"},
 ];
 
 const focusModes = [
@@ -57,9 +72,8 @@ const focusModes = [
   {label: "Top Right", value: "top_right"},
   {label: "Bottom Left", value: "bottom_left"},
   {label: "Bottom Right", value: "bottom_right"},
-  {label: "Auto", value: "auto"},
-  {label: "Face", value: "face"},
-  {label: "Custom", value: "custom"},
+  // {label: "Face", value: "face"},
+  // {label: "Custom", value: "custom"},
 ];
 
 const inputStyles =
@@ -73,7 +87,7 @@ const gradientBg = {
     "linear-gradient(to top left, rgba(236,72,153,0.08), rgba(236,72,153,0.00))",
 };
 
-export function ImageBasicsPanel({
+export function VideoBasicsPanel({
   transforms,
   onTransformChange,
 }: BasicsControlsProps) {
@@ -82,28 +96,33 @@ export function ImageBasicsPanel({
   };
 
   const resetDimensions = () => {
-    update({width: undefined, height: undefined, aspectRatio: undefined});
-  };
-
-  const resetCrop = () => {
     update({
+      width: undefined,
+      height: undefined,
+      aspectRatio: undefined,
       cropMode: undefined,
-      focus: undefined,
-      x: undefined,
-      y: undefined,
-      xc: undefined,
-      yc: undefined,
     });
   };
+
+  // const resetCrop = () => {
+  //   update({
+  //     cropMode: undefined,
+  //     focus: undefined,
+  //     x: undefined,
+  //     y: undefined,
+  //     xc: undefined,
+  //     yc: undefined,
+  //   });
+  // };
 
   const resetFocus = () => {
     update({
       focus: undefined,
-      zoom: undefined,
-      x: undefined,
-      y: undefined,
-      xc: undefined,
-      yc: undefined,
+      // zoom: undefined,
+      // x: undefined,
+      // y: undefined,
+      // xc: undefined,
+      // yc: undefined,
     });
   };
 
@@ -114,12 +133,12 @@ export function ImageBasicsPanel({
       aspectRatio: undefined,
       cropMode: undefined,
       focus: undefined,
-      x: undefined,
-      y: undefined,
-      xc: undefined,
-      yc: undefined,
-      zoom: undefined,
-      dpr: undefined,
+      // x: undefined,
+      // y: undefined,
+      // xc: undefined,
+      // yc: undefined,
+      // zoom: undefined,
+      // dpr: undefined,
     });
   };
 
@@ -263,7 +282,7 @@ export function ImageBasicsPanel({
                 </Select>
               </div>
 
-              {transforms.focus === "custom" && (
+              {/* {transforms.focus === "custom" && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label className="text-xs font-medium">X Position</Label>
@@ -300,24 +319,7 @@ export function ImageBasicsPanel({
                     />
                   </div>
                 </div>
-              )}
-
-              <div className="space-y-2">
-                <Label className="text-xs font-medium">
-                  Zoom{" "}
-                  {transforms.zoom ? `${transforms.zoom.toFixed(1)}x` : "1.0x"}
-                </Label>
-                <Slider
-                  min={0.1}
-                  max={5.0}
-                  step={0.1}
-                  value={[transforms.zoom || 1]}
-                  onValueChange={([value]) =>
-                    update({zoom: value === 1 ? undefined : value})
-                  }
-                  className="w-full"
-                />
-              </div>
+              )} */}
 
               <Button
                 variant="ghost"
@@ -329,7 +331,7 @@ export function ImageBasicsPanel({
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="pixel-ratio">
+          {/* <AccordionItem value="pixel-ratio">
             <AccordionTrigger className="py-3 cursor-pointer">
               <div className="flex items-center gap-2">
                 <Grid3X3 className="size-4" />
@@ -370,7 +372,7 @@ export function ImageBasicsPanel({
                 but increase file size.
               </div>
             </AccordionContent>
-          </AccordionItem>
+          </AccordionItem> */}
         </Accordion>
       </div>
 
@@ -383,16 +385,6 @@ export function ImageBasicsPanel({
             style={gradientBg}
           >
             Reset All
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() =>
-              update({aspectRatio: "1-1", cropMode: "maintain_ratio"})
-            }
-            className={`flex-1 ${buttonStyles}`}
-            style={gradientBg}
-          >
-            Square
           </Button>
         </div>
       </div>

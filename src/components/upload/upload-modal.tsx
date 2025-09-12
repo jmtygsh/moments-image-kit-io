@@ -1,5 +1,7 @@
 "use client";
 
+import {useEffect} from "react";
+
 import {
   AlertCircle,
   CheckCircle,
@@ -18,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {Progress} from "@/components/ui/progress";
+import {useMediaContext} from "@/contexts/media-context";
 import {useImageKitUpload} from "@/hooks/use-imagekit-upload";
 import {formatFileSize, getFileIcon, getStatusIcon} from "@/lib/upload-utils";
 import {cn} from "@/lib/utils";
@@ -36,6 +39,7 @@ const UploadModal = ({
   onOpenChange,
   uploadOptions = {},
 }: UploadModalProps) => {
+  const {triggerRefetchAll} = useMediaContext();
   const {
     files,
     addFiles,
@@ -60,6 +64,13 @@ const UploadModal = ({
     },
     multiple: true,
   });
+
+  // Refetch media when all uploads are complete
+  useEffect(() => {
+    if (allComplete && successCount > 0) {
+      triggerRefetchAll();
+    }
+  }, [allComplete, successCount, triggerRefetchAll]);
 
   const handleUploadAll = () => {
     uploadAllFiles(uploadOptions);

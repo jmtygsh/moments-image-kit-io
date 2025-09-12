@@ -1,17 +1,26 @@
-import {ThemeProvider as NextThemesProvider} from "next-themes";
+import React from "react";
 
-const Providers = ({children}: {children: React.ReactNode}) => {
+import {SessionProvider} from "next-auth/react";
+import {ThemeProvider} from "next-themes";
+
+import {MediaProvider} from "@/contexts/media-context";
+
+type ProvidersProps = {
+  children: React.ReactNode;
+};
+
+const Providers = ({children}: ProvidersProps) => {
   return (
-    <>
-      <NextThemesProvider
+    <SessionProvider>
+      <ThemeProvider
         attribute="class"
         defaultTheme="system"
         enableSystem
         disableTransitionOnChange
       >
-        {children}
-      </NextThemesProvider>
-    </>
+        <MediaProvider>{children}</MediaProvider>
+      </ThemeProvider>
+    </SessionProvider>
   );
 };
 

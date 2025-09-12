@@ -122,3 +122,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+input[type="color"]::-webkit-color-swatch {
+  border-width: unset !important;
+  border-color: unset !important;
+  border-style: unset !important;
+}
+
+/* For Chrome, Safari, Edge, etc. */
+input[type="color"]::-webkit-color-swatch {
+  border: none;
+}
+
+/* For Firefox */
+input[type="color"]::-moz-color-swatch {
+  border: none;
+}

@@ -1,10 +1,66 @@
-import {Suspense} from "react";
+"use client";
+
+import {useRouter, useSearchParams} from "next/navigation";
+import {useCallback, useEffect, useState} from "react";
+
+import {useSession} from "next-auth/react";
 
 import {getAllMedia} from "@/actions";
 import GridLoader from "@/components/media/grid-loader";
 import MasonryGrid from "@/components/media/masonry-grid";
+import {useMediaContext} from "@/contexts/media-context";
+import type {SelectMediaModel} from "@/db/schema/media";
 
-export default function Home() {
+function HomeContent() {
+  const [media, setMedia] = useState<SelectMediaModel[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const {registerRefetchFunction, unregisterRefetchFunction} =
+    useMediaContext();
+
+  const searchParams = useSearchParams();
+  const {data: session, status} = useSession();
+  const router = useRouter();
+
+  // Handle callback URL after authentication
+  useEffect(() => {
+    if (status === "authenticated" && session) {
+      const callbackUrl = searchParams.get("callbackUrl");
+      if (callbackUrl) {
+        router.push(callbackUrl);
+      }
+    }
+  }, [session, status, searchParams, router]);
+
+  const fetchMedia = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const result = await getAllMedia({page: 1, pageSize: 50});
+
+      if (!result.success) {
+        setError("Something went wrong");
+      } else {
+        setMedia(result.data!.media);
+      }
+    } catch (err) {
+      setError("Failed to load media");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMedia();
+  }, [fetchMedia]);
+
+  useEffect(() => {
+    registerRefetchFunction("homepage", fetchMedia);
+    return () => {
+      unregisterRefetchFunction("homepage");
+    };
+  }, [fetchMedia, registerRefetchFunction, unregisterRefetchFunction]);
+
   return (
     <>
       <div className="mt-12 sm:mt-20 sm:text-center">
@@ -28,26 +84,28 @@ export default function Home() {
         Click on any item to edit and transform it
       </p>
 
-      <Suspense fallback={<GridLoader />}>
-        <MediaGrid />
-      </Suspense>
+      {loading ? (
+        <GridLoader />
+      ) : error ? (
+        <div className="py-24 text-center">
+          <h3 className="mb-2 text-lg">
+            Oops, failed to load media try again.
+          </h3>
+          <p className="text-gray-500">{error}</p>
+          <button
+            onClick={fetchMedia}
+            className="mt-4 px-4 py-2 bg-pink-500 text-white rounded hover:bg-pink-600"
+          >
+            Retry
+          </button>
+        </div>
+      ) : (
+        <MasonryGrid media={media} />
+      )}
     </>
   );
 }
 
-async function MediaGrid() {
-  const result = await getAllMedia({page: 1, pageSize: 50});
-
-  if (!result.success) {
-    return (
-      <div className="py-24 text-center">
-        <h3 className="mb-2 text-lg">Oops, failed to load media try again.</h3>
-        <p className="text-gray-500">
-          {result.error?.message || "Something went wrong"}
-        </p>
-      </div>
-    );
-  }
-
-  return <MasonryGrid media={result.data!.media} />;
+export default function Home() {
+  return <HomeContent />;
 }

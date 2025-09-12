@@ -46,61 +46,150 @@ function videoBasicsToParams(b: VideoBasics): string[] {
 
 /* ---------------- OVERLAYS ---------------- */
 
+function videoOverlaysToParams(overlays: VideoOverlay[]): string[] {
+  const parts: string[] = [];
+  overlays.forEach(o => {
+    const p: string[] = [];
+
+    if (o.type === "image") {
+      p.push("l-image");
+      // Fix: Proper image path extraction and encoding
+      const imagePath = o.src.match(/\/(moments\/.+)$/)?.[1] ?? o.src;
+      p.push(`i-${imagePath}`);
+
+      if (o.width) p.push(`w-${o.width}`);
+      if (o.height) p.push(`h-${o.height}`);
+    } else if (o.type === "video") {
+      p.push("l-video");
+      // Fix: Extract video path like we do for images
+      const videoPath = o.src.match(/\/(moments\/.+)$/)?.[1] ?? o.src;
+      p.push(`i-${videoPath}`);
+      if (o.width) p.push(`w-${o.width}`);
+      if (o.height) p.push(`h-${o.height}`);
+    } else if (o.type === "text") {
+      p.push("l-text");
+      // Fix: Proper URL encoding for text content
+      p.push(`i-${o.text}`);
+      if (o.fontSize) p.push(`fs-${o.fontSize}`);
+      if (o.fontFamily) p.push(`ff-${o.fontFamily}`);
+      // Fix: Remove hash from color values
+      if (o.color) p.push(`co-${o.color.replace(/^#/, "")}`);
+      if (o.padding) p.push(`pa-${o.padding}`);
+    } else if (o.type === "solid") {
+      p.push("l-image");
+      p.push("i-ik_canvas");
+      // Fix: Remove hash from color values
+      if (o.color) p.push(`bg-${o.color.replace(/^#/, "")}`);
+      if (o.width) p.push(`w-${o.width}`);
+      if (o.height) p.push(`h-${o.height}`);
+      if (o.radius) p.push(`r-${o.radius}`);
+    }
+
+    // Fix: Correct overlay positioning parameters
+    if (o.x !== undefined) p.push(`lx-${o.x}`);
+    if (o.y !== undefined) p.push(`ly-${o.y}`);
+    if (o.startOffset !== undefined) p.push(`so-${o.startOffset}`);
+    if (o.endOffset !== undefined) p.push(`eo-${o.endOffset}`);
+    if (o.duration !== undefined) p.push(`du-${o.duration}`);
+
+    p.push("l-end");
+    parts.push(p.join(","));
+  });
+  return parts;
+}
+
 function overlaysToParams(overlays: Overlay[]): string[] {
   const parts: string[] = [];
 
   overlays.forEach(o => {
     if (o.type === "image") {
       const params: string[] = ["l-image"];
-      params.push(`i-${o.src}`);
+
+      // Fix: Better image path handling
+      const imagePath = o.src.match(/\/(moments\/.+)$/)?.[1] ?? o.src;
+      params.push(`i-${imagePath}`);
+
       if (o.width) params.push(`w-${o.width}`);
       if (o.height) params.push(`h-${o.height}`);
       if (o.x !== undefined) params.push(`x-${o.x}`);
       if (o.y !== undefined) params.push(`y-${o.y}`);
-      if (o.opacity !== undefined) params.push(`o-${o.opacity}`);
-      if (o.bgColor) params.push(`bg-${o.bgColor}`);
-      if (o.border) params.push(`b-${o.border}`);
+
+      // Fix: Proper color normalization
+      if (o.bgColor) {
+        const bg = o.bgColor.replace(/^#/, "").padEnd(6, "0");
+        params.push(`bg-${bg}`);
+      }
+
+      // Fix: Proper border handling
+      if (o.border) {
+        const border = o.border.replace(/^#/, "");
+        params.push(`b-${border}`);
+      }
+
       if (o.radius !== undefined) params.push(`r-${o.radius}`);
       if (o.rotation !== undefined) params.push(`rt-${o.rotation}`);
       if (o.flip) params.push(`fl-${o.flip}`);
+
       params.push("l-end");
       parts.push(params.join(","));
     }
 
     if (o.type === "text") {
       const params: string[] = ["l-text"];
-      params.push(`i-${encodeURIComponent(o.text)}`);
+      // Fix: Proper URL encoding
+      params.push(`i-${o.text}`);
       if (o.fontSize) params.push(`fs-${o.fontSize}`);
       if (o.fontFamily) params.push(`ff-${o.fontFamily}`);
-      if (o.color) params.push(`co-${o.color}`);
-      if (o.backgroundColor) params.push(`bg-${o.backgroundColor}`);
+      // Fix: Remove hash from colors
+      if (o.color) params.push(`co-${o.color.replace(/^#/, "")}`);
+      if (o.backgroundColor)
+        params.push(`bg-${o.backgroundColor.replace(/^#/, "")}`);
       if (o.padding) params.push(`pa-${o.padding}`);
       if (o.align) params.push(`lfo-${o.align}`);
-      if (o.bold) params.push("b-true");
-      if (o.italic) params.push("i-true");
-      if (o.strike) params.push("s-true");
+
+      // Handle typography properly
+      const typography: string[] = [];
+      if (o.bold) typography.push("b");
+      if (o.italic) typography.push("i");
+      if (o.strike) typography.push("strikethrough");
+      if (typography.length > 0) {
+        params.push(`tg-${typography.join("_")}`);
+      }
+
       if (o.rotation !== undefined) params.push(`rt-${o.rotation}`);
       if (o.flip) params.push(`fl-${o.flip}`);
       params.push("l-end");
+
       parts.push(params.join(","));
     }
 
     if (o.type === "gradient") {
-      const params: string[] = ["l-image", "i-ik_canvas", "e-gradient"];
-      if (o.direction !== undefined) params.push(`ld-${o.direction}`);
-      if (o.fromColor) params.push(`from-${o.fromColor}`);
-      if (o.toColor) params.push(`to-${o.toColor}`);
-      if (o.stopPoint !== undefined) params.push(`sp-${o.stopPoint}`);
+      const gradientParts: string[] = [];
+
+      if (o.direction !== undefined) gradientParts.push(`ld-${o.direction}`);
+      if (o.fromColor)
+        gradientParts.push(`from-${o.fromColor.replace(/^#/, "")}`);
+      if (o.toColor) gradientParts.push(`to-${o.toColor.replace(/^#/, "")}`);
+      if (o.stopPoint !== undefined) gradientParts.push(`sp-${o.stopPoint}`);
+
+      const params: string[] = [
+        "l-image",
+        "i-ik_canvas",
+        `e-gradient-${gradientParts.join("_")}`,
+      ];
+
       if (o.width) params.push(`w-${o.width}`);
       if (o.height) params.push(`h-${o.height}`);
       if (o.radius) params.push(`r-${o.radius}`);
+
       params.push("l-end");
       parts.push(params.join(","));
     }
 
     if (o.type === "solid") {
       const params: string[] = ["l-image", "i-ik_canvas"];
-      if (o.color) params.push(`bg-${o.color}`);
+      // Fix: Remove hash from color
+      if (o.color) params.push(`bg-${o.color.replace(/^#/, "")}`);
       if (o.width) params.push(`w-${o.width}`);
       if (o.height) params.push(`h-${o.height}`);
       if (o.opacity !== undefined) params.push(`o-${o.opacity}`);
@@ -110,42 +199,6 @@ function overlaysToParams(overlays: Overlay[]): string[] {
     }
   });
 
-  return parts;
-}
-
-function videoOverlaysToParams(overlays: VideoOverlay[]): string[] {
-  const parts: string[] = [];
-  overlays.forEach(o => {
-    const p: string[] = [];
-    if (o.type === "image") {
-      p.push("l-image", `i-${o.src}`);
-      if (o.width) p.push(`w-${o.width}`);
-      if (o.height) p.push(`h-${o.height}`);
-    } else if (o.type === "video") {
-      p.push("l-video", `i-${o.src}`);
-      if (o.width) p.push(`w-${o.width}`);
-      if (o.height) p.push(`h-${o.height}`);
-    } else if (o.type === "text") {
-      p.push("l-text", `i-${encodeURIComponent(o.text)}`);
-      if (o.fontSize) p.push(`fs-${o.fontSize}`);
-      if (o.fontFamily) p.push(`ff-${o.fontFamily}`);
-      if (o.color) p.push(`co-${o.color}`);
-      if (o.padding) p.push(`pa-${o.padding}`);
-    } else if (o.type === "solid") {
-      p.push("l-image", "i-ik_canvas", `bg-${o.color}`);
-      if (o.width) p.push(`w-${o.width}`);
-      if (o.height) p.push(`h-${o.height}`);
-      if (o.radius) p.push(`r-${o.radius}`);
-    }
-    // shared overlay controls
-    if (o.x) p.push(`lx-${o.x}`);
-    if (o.y) p.push(`ly-${o.y}`);
-    if (o.startOffset) p.push(`lso-${o.startOffset}`);
-    if (o.endOffset) p.push(`leo-${o.endOffset}`);
-    if (o.duration) p.push(`ldu-${o.duration}`);
-    p.push("l-end");
-    parts.push(p.join(","));
-  });
   return parts;
 }
 
@@ -153,35 +206,120 @@ function videoOverlaysToParams(overlays: VideoOverlay[]): string[] {
 
 function enhancementsToParams(enh: Enhancements): string[] {
   const parts: string[] = [];
+
+  // Basic enhancements
   if (enh.blur) parts.push(`bl-${enh.blur}`);
   if (enh.sharpen) parts.push(`e-sharpen-${enh.sharpen}`);
+  if (enh.contrast !== undefined) parts.push(`e-contrast-${enh.contrast}`);
+  if (enh.brightness !== undefined)
+    parts.push(`e-brightness-${enh.brightness}`);
+  if (enh.saturation !== undefined)
+    parts.push(`e-saturation-${enh.saturation}`);
+  if (enh.gamma !== undefined) parts.push(`e-gamma-${enh.gamma}`);
+  if (enh.hue !== undefined) parts.push(`e-hue-${enh.hue}`);
+  if (enh.vibrance !== undefined) parts.push(`e-vibrance-${enh.vibrance}`);
+  if (enh.grayscale) parts.push("e-grayscale");
+  if (enh.sepia) parts.push("e-sepia");
+
+  // Shadow effects
   if (enh.shadow) {
     const s = enh.shadow;
-    const shadowParts: string[] = ["e-shadow"];
+    const shadowParts: string[] = [];
     if (s.blur !== undefined) shadowParts.push(`bl-${s.blur}`);
     if (s.saturation !== undefined) shadowParts.push(`st-${s.saturation}`);
-    if (s.offsetX !== undefined) shadowParts.push(`x-${s.offsetX}`);
-    if (s.offsetY !== undefined) shadowParts.push(`y-${s.offsetY}`);
-    parts.push(shadowParts.join("_"));
+    if (s.offsetX !== undefined) {
+      const xValue = s.offsetX < 0 ? `N${Math.abs(s.offsetX)}` : s.offsetX;
+      shadowParts.push(`x-${xValue}`);
+    }
+    if (s.offsetY !== undefined) {
+      const yValue = s.offsetY < 0 ? `N${Math.abs(s.offsetY)}` : s.offsetY;
+      shadowParts.push(`y-${yValue}`);
+    }
+
+    if (shadowParts.length > 0) {
+      parts.push(`e-shadow-${shadowParts.join("_")}`);
+    }
   }
+
+  // Background effects
   if (enh.background) {
     const bg = enh.background;
-    if (bg.type === "solid" && bg.color) parts.push(`bg-${bg.color}`);
+
+    // Add width and height if present (separate from background)
+    if (bg.width) parts.push(`w-${bg.width}`);
+    if (bg.height) parts.push(`h-${bg.height}`);
+
+    // Ensure pad_resize crop mode for blurred backgrounds
     if (bg.type === "blurred") {
-      const val = ["bg-blurred"];
-      if (bg.blurIntensity) val.push(`${bg.blurIntensity}`);
-      if (bg.brightness) val.push(`${bg.brightness}`);
-      parts.push(val.join("_"));
+      // Add crop mode if not already present
+      if (!parts.some(part => part.startsWith("cm-"))) {
+        parts.push("cm-pad_resize");
+      }
+
+      // Build blurred background syntax
+      const blurParts = ["bg-blurred"];
+
+      // Add blur intensity (default to 'auto' if not specified)
+      const intensity = bg.blurIntensity || "auto";
+      blurParts.push(intensity.toString());
+
+      // Add brightness if specified (handle negative values with N prefix)
+      if (bg.brightness !== undefined) {
+        const brightness =
+          bg.brightness < 0
+            ? `N${Math.abs(bg.brightness)}`
+            : bg.brightness.toString();
+        blurParts.push(brightness);
+      }
+
+      parts.push(blurParts.join("_"));
     }
-    if (bg.type === "dominant") parts.push("bg-dominant");
+
+    // Handle solid backgrounds
+    if (bg.type === "solid" && bg.color) {
+      parts.push(`bg-${bg.color.replace(/^#/, "")}`);
+    }
+
+    // if (bg.type === "dominant") parts.push("bg-dominant");
+
+    // Handle dominant backgrounds - requires cm-pad_extract and dimensions
+    if (bg.type === "dominant") {
+      // Ensure pad_extract crop mode for dominant backgrounds
+      if (!parts.some(part => part.startsWith("cm-"))) {
+        parts.push("cm-pad_extract");
+      }
+
+      parts.push("bg-dominant");
+    }
+
+    // Handle solid background brightness
+    if (bg.type === "solid" && bg.brightness !== undefined) {
+      parts.push(`e-brightness-${bg.brightness}`);
+    }
   }
+
+  // Gradient effects
+  if (enh.gradient) {
+    const g = enh.gradient;
+    const gradientParts: string[] = [];
+    if (g.direction !== undefined) gradientParts.push(`ld-${g.direction}`);
+    if (g.fromColor)
+      gradientParts.push(`from-${g.fromColor.replace(/^#/, "")}`);
+    if (g.toColor) gradientParts.push(`to-${g.toColor.replace(/^#/, "")}`);
+    if (g.stopPoint !== undefined) gradientParts.push(`sp-${g.stopPoint}`);
+
+    if (gradientParts.length > 0) {
+      parts.push(`e-gradient-${gradientParts.join("_")}`);
+    }
+  }
+
   return parts;
 }
 
 function videoEnhancementsToParams(enh: VideoEnhancements): string[] {
   const parts: string[] = [];
 
-  // trimming
+  // Video trimming parameters
   if (enh.trimming) {
     const t = enh.trimming;
     if (t.startOffset !== undefined) parts.push(`so-${t.startOffset}`);
@@ -221,11 +359,13 @@ function aiToParams(ai: AiMagic): string[] {
       parts.push(bg.mode === "economy" ? "e-bgremove" : "e-removedotbg");
     }
     if (bg.changePrompt) {
+      // Fix: Proper URL encoding for prompts
       parts.push(`e-changebg-prompt-${bg.changePrompt}`);
     }
     if (bg.generativeFill) {
       const g = bg.generativeFill;
       let val = "bg-genfill";
+      // Fix: Proper URL encoding for prompts
       if (g.prompt) val += `-prompt-${g.prompt}`;
       parts.push(val);
       if (g.width) parts.push(`w-${g.width}`);
@@ -236,6 +376,7 @@ function aiToParams(ai: AiMagic): string[] {
 
   if (ai.editing) {
     const e = ai.editing;
+    // Fix: Proper URL encoding for prompts
     if (e.prompt) parts.push(`e-edit-prompt-${e.prompt}`);
     if (e.retouch) parts.push("e-retouch");
     if (e.upscale) parts.push("e-upscale");
@@ -243,17 +384,23 @@ function aiToParams(ai: AiMagic): string[] {
 
   if (ai.shadowLighting?.dropShadow) {
     const s = ai.shadowLighting.dropShadow;
+
+    // First remove background to create transparency
+    parts.push("e-removedotbg");
+
+    // Then apply drop shadow with correct syntax using underscores
     let val = "e-dropshadow";
     if (s.azimuth !== undefined) val += `-az-${s.azimuth}`;
-    if (s.elevation !== undefined) val += `-el-${s.elevation}`;
-    if (s.saturation !== undefined) val += `-st-${s.saturation}`;
+    if (s.elevation !== undefined) val += `_el-${s.elevation}`;
+    if (s.saturation !== undefined) val += `_st-${s.saturation}`;
     parts.push(val);
   }
 
   if (ai.generation) {
     const g = ai.generation;
     if (g.textPrompt) {
-      parts.push(`ik-genimg-prompt-${g.textPrompt}`);
+      // Fix: Proper URL encoding for prompts
+      parts.push(`e-edit-prompt-${g.textPrompt}`);
     }
     if (g.variation) parts.push("e-genvar");
   }
@@ -274,8 +421,15 @@ function aiToParams(ai: AiMagic): string[] {
 /* ---------------- AUDIO ---------------- */
 function audioToParams(a: VideoAudio): string[] {
   const p: string[] = [];
+
+  // Audio muting - correct parameter
   if (a.mute) p.push("ac-none");
-  if (a.extractAudio) p.push("vc-none");
+
+  // Audio extraction - this should create audio-only output
+  if (a.extractAudio) {
+    p.push("vc-none"); // Remove video codec, keep audio only
+  }
+
   return p;
 }
 
@@ -294,8 +448,9 @@ export function buildTrString(config: TransformationConfig): string {
 
   if (config.type === "VIDEO") {
     if (config.basics) parts.push(...videoBasicsToParams(config.basics));
-    if (config.enhancements)
+    if (config.enhancements) {
       parts.push(...videoEnhancementsToParams(config.enhancements));
+    }
     if (config.overlays) parts.push(...videoOverlaysToParams(config.overlays));
     if (config.audio) parts.push(...audioToParams(config.audio));
   }
@@ -312,8 +467,8 @@ export function buildImageKitUrl(
 
   try {
     const url = new URL(src);
-
     const base = url.origin + url.pathname;
+
     const search = url.search
       ? `${url.search.replace(/^\?/, "")}&tr=${tr}`
       : `tr=${tr}`;

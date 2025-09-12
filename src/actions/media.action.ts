@@ -20,6 +20,7 @@ import {handleError} from "@/lib/handlers";
 import action from "@/lib/handlers/action";
 import {PaginatedSearchParamsSchema} from "@/lib/schema";
 import {PaginatedSearchParams} from "@/types";
+import type {ActionResponse, ErrorResponse} from "@/types";
 
 export const createMedia = async (
   params: CreateMediaParams
@@ -140,6 +141,29 @@ export const getAllMedia = cache(
           media: mediaItems,
           isNext,
         },
+      };
+    } catch (error) {
+      return handleError(error) as ErrorResponse;
+    }
+  }
+);
+
+export const getLatestMedia = cache(
+  async (
+    params: {limit?: number} = {limit: 10}
+  ): Promise<ActionResponse<SelectMediaModel[]>> => {
+    try {
+      const {limit = 10} = params;
+
+      const latestMedia = await db
+        .select()
+        .from(media)
+        .orderBy(desc(media.createdAt))
+        .limit(limit);
+
+      return {
+        success: true,
+        data: latestMedia,
       };
     } catch (error) {
       return handleError(error) as ErrorResponse;

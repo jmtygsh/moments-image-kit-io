@@ -1,3 +1,4 @@
+import LoginButton from "./auth/login-button";
 import Logo from "./logo";
 import {ThemeSwitch} from "./theme-switch";
 import UploadButton from "./upload/upload-button";
@@ -9,6 +10,10 @@ const Navbar = () => {
 
       <div className="flex items-center gap-2.5">
         <ThemeSwitch />
+
+        <div className="flex min-w-8">
+          <LoginButton />
+        </div>
 
         <div className="flex min-w-8">
           <UploadButton />

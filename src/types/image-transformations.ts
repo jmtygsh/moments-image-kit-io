@@ -95,6 +95,14 @@ export type Overlay = ImageOverlay | TextOverlay | GradientBlock | SolidBlock;
 export type Enhancements = {
   blur?: number; // bl (0–100)
   sharpen?: number; // e-sharpen (0–10)
+  contrast?: number; // e-contrast (-100 to 100)
+  brightness?: number; // e-brightness (-100 to 100)
+  saturation?: number; // e-saturation (-100 to 100)
+  gamma?: number; // e-gamma (0.1 to 3.0)
+  hue?: number; // e-hue (0-360)
+  vibrance?: number; // e-vibrance (-100 to 100)
+  grayscale?: boolean; // e-grayscale
+  sepia?: boolean; // e-sepia
   shadow?: {
     blur?: number; // bl
     saturation?: number; // st
@@ -103,9 +111,17 @@ export type Enhancements = {
   };
   background?: {
     type: "solid" | "blurred" | "dominant";
+    width?: number;
+    height?: number;
     color?: string; // for solid
     blurIntensity?: number | "auto"; // for blurred
     brightness?: number; // -255 to 255
+  };
+  gradient?: {
+    direction?: number; // ld (0-360 degrees)
+    fromColor?: string; // from
+    toColor?: string; // to
+    stopPoint?: number; // sp (0-100)
   };
 };
 

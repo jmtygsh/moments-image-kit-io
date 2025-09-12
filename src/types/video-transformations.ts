@@ -3,8 +3,10 @@ export type CropMode =
   | "pad_resize"
   | "force"
   | "at_max"
+  | "at_max_enlarge"
   | "at_least"
-  | "extract";
+  | "extract"
+  | "pad_extract";
 
 export type FocusMode =
   | "center"
@@ -15,7 +17,11 @@ export type FocusMode =
   | "top_left"
   | "top_right"
   | "bottom_left"
-  | "bottom_right";
+  | "bottom_right"
+  | "auto"
+  | "face"
+  | "custom"
+  | `object-${string}`; // e.g. object-dog, object-car
 
 export type BasicsTransform = {
   width?: number | string; // w
@@ -23,6 +29,12 @@ export type BasicsTransform = {
   aspectRatio?: string; // ar e.g. "16-9" or expr
   cropMode?: CropMode; // c / cm
   focus?: FocusMode; // fo
+  x?: number; // for extract/custom focus
+  y?: number;
+  xc?: number;
+  yc?: number;
+  zoom?: number; // z
+  dpr?: number | "auto"; // dpr
   background?: {
     type: "solid" | "blurred";
     color?: string; // hex, rgba, or color name
@@ -44,6 +56,7 @@ export type OverlayBase = {
   startOffset?: number | string; // lso
   endOffset?: number | string; // leo
   duration?: number | string; // ldu
+  [key: string]: unknown;
 };
 
 export type ImageOverlay = OverlayBase & {

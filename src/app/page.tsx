@@ -1,7 +1,7 @@
 "use client";
 
 import {useRouter, useSearchParams} from "next/navigation";
-import {useCallback, useEffect, useState} from "react";
+import {Suspense, useCallback, useEffect, useState} from "react";
 
 import {useSession} from "next-auth/react";
 
@@ -107,5 +107,9 @@ function HomeContent() {
 }
 
 export default function Home() {
-  return <HomeContent />;
+  return (
+    <Suspense fallback={<GridLoader />}>
+      <HomeContent />
+    </Suspense>
+  );
 }

@@ -20,7 +20,7 @@ const Studio = async ({params}: RouteParams) => {
   const {id} = await params;
   const media = await getMedia({id});
 
-  if (!media.data) {
+  if (!media.success || !media) {
     return <NotFound />;
   }
 

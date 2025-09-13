@@ -96,9 +96,8 @@ export function TransformPanel({
           return (
             <VideoEnhancementsPanel
               enhancements={transforms.enhancements || {}}
-              audio={transforms.audio || {}}
-              onChange={(enhancements, audio) =>
-                onTransformChange({...transforms, enhancements, audio})
+              onChange={e =>
+                onTransformChange({...transforms, enhancements: e})
               }
             />
           );

@@ -120,9 +120,7 @@ export const useImageKitUpload = () => {
         });
 
         if (!result.success) {
-          throw new Error(
-            result.error?.message || "Failed to save to database"
-          );
+          throw new Error("Failed to save to database");
         }
 
         return result.data;
